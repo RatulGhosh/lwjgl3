@@ -1,11 +1,12 @@
-/config/ide/idea/.idea/workspace.xml
+/.idea/workspace.xml
 /bin
-/generated
-/release
+/modules/core/src/generated
 /libs
 /wiki
+.gradle
 .DS_Store
 *.bat
+*.jpg
 *.ogg
 *.sh
 *.ttf

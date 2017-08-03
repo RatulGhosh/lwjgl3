@@ -3,37 +3,35 @@ LWJGL is organized in modules, described below:
 
 ### Core
 The LWJGL core.
-* src/core
-* src/native
-* generated/java
-* generated/native
+* modules/core/src/main/c
+* modules/core/src/main/java
+* modules/core/src/generated/c
+* modules/core/src/generated/java
+* modules/core/src/test/java (unit tests and demo/tutorial code)
+* modules/core/src/test/resources (images and other resources used in tests)
 
 Dependencies: n/a (but the Generator has to execute successfully first)
+Library Dependencies: n/a
+Test Library Dependencies: TestNG, JCommander
 
-### Utilities
-Optional LWJGL components and helper functionality.
-* src/util
+### Generator
+The source code Generator and related tools.
+* modules/generator/src/main/java
+* modules/generator/src/main/kotlin
 
-Dependencies: Core
+Dependencies: n/a
+Library Dependencies: Kotlin runtime, JDK tools
 
 ### Templates
-The source code Generator and the templates it uses to define the native bindings.
-* src/templates
+The templates used to define the native bindings.
+* modules/templates/src/main/kotlin
 
-Dependencies: Core
+Dependencies: Generator module
 Library Dependencies: Kotlin runtime
-
-### Tests
-Unit tests and demo/tutorial code.
-* src/tests
-
-Module Dependencies: Core, Util, Templates  
-Library Dependencies: TestNG, JCommander
 
 # INSTALLATION
 Requirements:
-* JDK 6 or newer  
-    The **JAVA_HOME** environment variable must be set. Also see *JAVA6_HOME* below for more info.
+* JDK 8 or newer  
 * Ant 1.9.3 or newer
 
 Step-by-step:
@@ -46,16 +44,18 @@ Step-by-step:
 
 At this point you're ready to follow the build process explained below.
 
-LWJGL also comes with a preconfigured **IntelliJ IDEA** project. You can use the Community Edition with the Kotlin and Ant plugins and, optionally, the TestNG and Copyright plugins. There are some Run Configurations defined and you can also call the ant targets directly from the IDE interface.
-* File &gt; Open &gt; choose the */config/ide/idea* folder
+LWJGL comes with a preconfigured **IntelliJ IDEA** project. You can use the Community Edition with the Kotlin and Ant plugins and, optionally, the TestNG and Copyright plugins.
+* File &gt; Open &gt; choose the folder that contains the cloned LWJGL repository
 * File &gt; Project Structure &gt; Project &gt; choose or create the Project SDK
 * If you haven't used the init-generated and init-wiki targets, either ignore the VCS errors, or go to Settings &gt; Version Control &gt; remove the missing directories from the list of VCS roots.
 
-LWJGL does not yet provide projects for **Eclipse** and **Netbeans**, but they should be straightforward to configure, assuming you follow the project structure explained above. There's also a Kotlin plugin for Eclipse available now, see [Getting Started with Eclipse](http://kotlinlang.org/docs/tutorials/getting-started-eclipse.html).
+LWJGL also comes with an **Eclipse** project. Copy the project files from the [eclipse](https://github.com/LWJGL/lwjgl3/tree/master/config/ide/eclipse) folder into the root directory and open it as an Eclipse file. There's also a Kotlin plugin for Eclipse available now, see [Getting Started with Eclipse](http://kotlinlang.org/docs/tutorials/getting-started-eclipse.html).
+
+LWJGL does also provide a project for **Netbeans**. You have to copy the *nbproject* folder into the root directory. Afterwards you can open it as NetBeans project.
 
 # BUILD PROCESS
 LWJGL uses Ant for the build process, which goes like so:
-* ant compile-templates (compiles the Generator)
+* ant compile-templates (compiles the Generator and Template modules)
 * ant generate (runs the Generator)
 * ant compile (compiles the Java source code)
 * ant compile-native (compiles the native code for the target platform)
@@ -63,11 +63,11 @@ LWJGL uses Ant for the build process, which goes like so:
 * ant demo -Dclass=&lt;*classpath to demo*&gt; (runs the demo specified by the *class* property)
 
 # GENERATOR
-LWJGL uses the **Generator** in the Templates module to automatically generate native code bindings. The Generator uses template files as input. Both the Generator itself and the template files are written in Kotlin, which is a new JVM-based language, more info [here](http://kotlinlang.org/). The Generator defines a handy DSL that the templates use to define the native code structure.
+LWJGL uses the **Generator** to automatically generate native code bindings. The Generator uses template files as input. Both the Generator itself and the template files are written in Kotlin, which is a new JVM-based language, more info [here](http://kotlinlang.org/). The Generator defines a handy DSL that the templates use to define the native code structure.
 
-* Generator source: src/templates/org/lwjgl/generator
-* Template configuration: src/templates/org/lwjgl/&lt;**PACKAGE**&gt;
-* Template source: src/templates/org.lwjgl/&lt;**PACKAGE**&gt;/templates
+* Generator source: modules/generator/src/main/kotlin/org/lwjgl/generator
+* Template configuration: modules/templates/src/main/kotlin/org/lwjgl/&lt;**PACKAGE**&gt;
+* Template source: modules/templates/src/main/kotlin/org/lwjgl/&lt;**PACKAGE**&gt;/templates
 
 The Generator is very aggressive with skipping work during the generation process. It does that by comparing timestamps of the input template source and the output Java source files. The output file timestamp is also compared against the timestamp of the latest change in the Generator source. Even when all attemps to skip generation fail, the generation happens in-memory and the output file contents are compared against the new content. Only when something has changed is the file overwritten.
 
@@ -76,23 +76,21 @@ The benefit of all that is reduced native code compilation times. If, for any re
 # BUILD CONFIGURATION
 The config folder contains the LWJGL configuration.
 * ANT
-	- Basic definitions: config/build-definitions.xml
-	- Platform-specific definitions: A folder per platform
+	- config/build-assets.xml: Demo assets
+	- config/build-bindings.xml: Bindings configuration
+	- config/build-definitions.xml: Reusable definitions and utilities
+	- config/<platform>/build.xml: Platform-specific definitions
 * TestNG
 	- config/tests.xml
 	- a config/tests_<platform>.xml per platform
-* Kotlin
-	- config/Templates.kts is the build script used by the Kotlin compiler
 
 The ANT build can be configured with the following environment variables:
-* JAVA6_HOME (optional, recommended)  
-	Should point to a JDK 6. This is used to configure the javac *bootclasspath* to ensure that the source code is compatible with Java 6. This is only useful if you plan to make changes to the LWJGL source code.
 * LWJGL_BUILD_TYPE (optional)  
 	This is used as the source of binary dependencies. Valid values:
    - *nightly*  
-       the latest successful build. Dependency repos can be found [here](https://github.com/LWJGL-CI).
+       the latest successful build. Dependency repos can be found [here](https://github.com/LWJGL-CI). This is the default.
    - *stable*  
-       the latest nightly build that has been verified to work with LWJGL. This is the default.
+       the latest nightly build that has been verified to work with LWJGL.
    - *release/latest*  
        the latest stable build that has been promoted to an official LWJGL release.
    - *release/{build.version}*  
@@ -112,35 +110,7 @@ LWJGL can be configured at runtime with system properties. There are two types o
 * DYNAMIC  
     These may be read once or more times, changing LWJGL's behavior dynamically.
 
-The supported properties are:
-* org.lwjgl.libname [STATIC]  
-	Can be used to override the LWJGL library name. It can also be an absolute path.
-* org.lwjgl.librarypath [DYNAMIC]  
-    Takes priority over java.library.path. It may contain one or more directory paths, separated by the platform path separator (: or ;).
-* org.lwjgl.util.Debug [STATIC]  
-	Set to true to enable LWJGL's debug mode. There will be logged messages on stderr and extra runtime checks (some potentially expensive, performance-wise).
-* org.lwjgl.util.NoChecks [STATIC]  
-	Set to true to disable LWJGL's basic checks. These are trivial checks that LWJGL performs to avoid JVM crashes, very useful during development. Their performance impact is usually minimal, but may they be disabled for released applications.
-* org.lwjgl.util.BufferAlign [STATIC]  
-	Sets the alignment of buffers allocated by BufferUtils. By default, buffer allocations will be unaligned (whatever ByteBuffer.allocateDirect returns). Supported values:
-	- *page*  
-		Page alignment (usually 4 kilobytes)
-	- *cache-line*  
-		Cache-line alignment (usually 64 bytes)
-	- *default*  
-		Default alignment. The JDK uses 8 byte alignment for all direct ByteBuffers.
-	- &lt;*number*&gt;  
-		Custom alignment. Must be a power-of-two integer, greater than 8.
-* org.lwjgl.openal.libname [DYNAMIC]
-* org.lwjgl.opencl.libname [DYNAMIC]
-* org.lwjgl.opengl.libname [DYNAMIC]  
-	Can be used to override the library name of the corresponding library. It can also be an absolute path.
-* org.lwjgl.opengl.maxVersion [STATIC]  
-	Can be used to limit the maximum available OpenGL version. This can be useful to ensure that an application has not accidentally used features only available in a higher OpenGL version.
-* org.lwjgl.openal.explicitInit [STATIC]
-* org.lwjgl.opencl.explicitInit [STATIC]
-* org.lwjgl.opengl.explicitInit [STATIC]  
-	By default, LWJGL will automatically initialize the corresponding library, when it is first accessed. Set this property to disable this behavior.
+The supported options can be found in the [Configuration](https://github.com/LWJGL/lwjgl3/blob/master/modules/core/src/main/java/org/lwjgl/system/Configuration.java) class. This class can also be used to set the option values programmatically.
 
 # LIBRARY DEPENDENCIES
 * Kotlin
